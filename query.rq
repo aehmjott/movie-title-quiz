@@ -1,0 +1,15 @@
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX wd: <http://www.wikidata.org/entity/> 
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX p: <http://www.wikidata.org/prop/>
+PREFIX v: <http://www.wikidata.org/prop/statement/>
+SELECT ?q WHERE {
+  ?q wdt:P31 wd:Q11424.
+  ?q wdt:P364 wd:Q1860.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+
+  ?q wikibase:sitelinks ?sitelinks.
+}
+order by desc(?sitelinks)
+LIMIT 1000
