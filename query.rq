@@ -1,3 +1,4 @@
+# https://query.wikidata.org/
 PREFIX wikibase: <http://wikiba.se/ontology#>
 PREFIX wd: <http://www.wikidata.org/entity/> 
 PREFIX wdt: <http://www.wikidata.org/prop/direct/>
@@ -12,4 +13,4 @@ SELECT ?q WHERE {
   ?q wikibase:sitelinks ?sitelinks.
 }
 order by desc(?sitelinks)
-LIMIT 1000
+LIMIT 5000
