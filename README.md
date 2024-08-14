@@ -41,4 +41,5 @@ Populate the movies created in step one with information from Wikidata:
 
 ### 3. Movie Title Translation
 `python manage.py translate_movie_titles`
+
 Translates the foreign movie titles into English with MarianMT
