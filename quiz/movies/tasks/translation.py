@@ -42,28 +42,16 @@ LANGUAGE_MAP = {
     "to": "to",
 }
 
+# Batches should be as large as possible,
+# but a batch size that is too large may lead to crashes.
+# 25 works fine on my machine
+MAX_BATCH_SIZE = 25
+
 
 class MovieTitleTranslator:
 
     def __init__(self, movie_titles):
         self.movie_titles = movie_titles
-
-    def translate(self, source_language_code: str, titles: list[str]) -> list[str]:
-
-        # https://huggingface.co/docs/transformers/model_doc/marian
-        model_name = f"Helsinki-NLP/opus-mt-{LANGUAGE_MAP[source_language_code]}-en"
-
-        tokenizer = MarianTokenizer.from_pretrained(
-            model_name,
-            source_lang=source_language_code,
-            target_lang="en",
-            clean_up_tokenization_spaces=True,
-        )
-        model = MarianMTModel.from_pretrained(model_name)
-
-        tokens = tokenizer(titles, return_tensors="pt", padding=True)
-        translated = model.generate(**tokens)
-        return [tokenizer.decode(t, skip_special_tokens=True) for t in translated]
 
     def run(self):
 
@@ -71,33 +59,58 @@ class MovieTitleTranslator:
         translated_count = 0
 
         # Group titles by language before translating to increase the batch size
-        titles_by_language = defaultdict(list)
+        #
+        titles_by_language = {}
         for title_obj in self.movie_titles:
-            titles_by_language[title_obj.language_code].append(title_obj)
+            if title_obj.language_code in titles_by_language:
+                batches = titles_by_language[title_obj.language_code]
+                if len(batches[-1]) < MAX_BATCH_SIZE:
+                    batches[-1].append(title_obj)
+                else:
+                    batches.append([title_obj])
+            else:
+                titles_by_language[title_obj.language_code] = [[title_obj]]
             total_count += 1
 
         print(f"Translating {total_count} movie titles")
 
-        for language_code, movie_title_objects in titles_by_language.items():
+        # Translate one language at a time
+        for language_code, batches in titles_by_language.items():
+            print(f"Translating language '{language_code}' Batches: {len(batches)}")
 
-            print(
-                f"Translating language '{language_code}' "
-                f"batch size: {len(movie_title_objects)}"
+            # https://huggingface.co/docs/transformers/model_doc/marian
+            model_name = f"Helsinki-NLP/opus-mt-{LANGUAGE_MAP[language_code]}-en"
+
+            tokenizer = MarianTokenizer.from_pretrained(
+                model_name,
+                source_lang=language_code,
+                target_lang="en",
+                clean_up_tokenization_spaces=False,
             )
+            model = MarianMTModel.from_pretrained(model_name)
 
-            translated_titles = self.translate(
-                language_code, [m.title for m in movie_title_objects]
-            )
+            for movie_title_objects in batches:
+                print(f"Batch size: {len(movie_title_objects)}")
 
-            # Update the AlternativeMovieTitle objects
-            for title_obj, translated_title in zip(
-                movie_title_objects, translated_titles
-            ):
-                title_obj.translated_title = translated_title
-                title_obj.update_translation_difference_ratio()
+                tokens = tokenizer(
+                    [m.title for m in movie_title_objects],
+                    return_tensors="pt",
+                    padding=True,
+                )
+                translated = model.generate(**tokens)
+                translated_titles = [
+                    tokenizer.decode(t, skip_special_tokens=True) for t in translated
+                ]
 
-            AlternativeMovieTitle.objects.bulk_update(
-                movie_title_objects, ["translated_title"]
-            )
-            translated_count += len(movie_title_objects)
-            print(f"{translated_count}/{total_count} done.")
+                # Update the AlternativeMovieTitle objects
+                for title_obj, translated_title in zip(
+                    movie_title_objects, translated_titles
+                ):
+                    title_obj.translated_title = translated_title
+                    title_obj.update_translation_difference_ratio()
+
+                AlternativeMovieTitle.objects.bulk_update(
+                    movie_title_objects, ["translated_title"]
+                )
+                translated_count += len(movie_title_objects)
+                print(f"{translated_count}/{total_count} done.")
