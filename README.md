@@ -2,6 +2,8 @@
 
 A Django application to play a fun movie quiz.
 
+![screenshot](docs/images/screenshot.jpg)
+
 ## Setup
 
 ```bash
