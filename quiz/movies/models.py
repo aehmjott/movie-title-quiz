@@ -58,9 +58,9 @@ class AlternativeMovieTitle(models.Model):
             3,
         )
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.update_translation_difference_ratio()
-        super().save()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.title} ({self.language_code};{self.movie.english_title})"
