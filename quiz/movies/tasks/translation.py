@@ -108,10 +108,9 @@ class MovieTitleTranslator:
                     movie_title_objects, translated_titles
                 ):
                     title_obj.translated_title = translated_title
-                    title_obj.update_translation_difference_ratio()
+                    # Call save() instead of bulk_update
+                    # to calculate the translation_difference_ratio
+                    title_obj.save()
 
-                AlternativeMovieTitle.objects.bulk_update(
-                    movie_title_objects, ["translated_title"]
-                )
                 translated_count += len(movie_title_objects)
                 print(f"{translated_count}/{total_count} done.")
