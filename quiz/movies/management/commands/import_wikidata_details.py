@@ -1,9 +1,11 @@
 from django.core.management.base import BaseCommand
-from movies.tasks import wikidata_detail_download
+from movies.tasks.wikidata import WikidataAPI
+from movies.models import Movie
 
 
 class Command(BaseCommand):
-    help = "Imports movie data from Wikidata for existing ``movies.Movie`´` objects"
+    help = "Imports details from Wikidata for existing ``movies.Movie`` objects"
 
     def handle(self, *args, **options):
-        wikidata_detail_download()
+        incomplete_movies = Movie.objects.filter(english_title="")[:10]
+        WikidataAPI(incomplete_movies).run()

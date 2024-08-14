@@ -1,10 +1,12 @@
 from django.core.management.base import BaseCommand
-from movies.tasks import wikidata_download
+from movies.tasks.wikidata import WikidataGraphAPI
 
 
 class Command(BaseCommand):
     help = "Imports movie data (id and sitelink count) from Wikidata"
 
+    def add_arguments(self, parser):
+        parser.add_argument("count", type=int)
+
     def handle(self, *args, **options):
-        # top 5000 movies, 500 per request
-        wikidata_download(5000, 500)
+        WikidataGraphAPI().run(options["count"])
