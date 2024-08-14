@@ -8,7 +8,7 @@ import requests
 import time
 
 
-# Wikidata allows a maximum of 50 per filter
+# Wikidata allows a maximum of 50 values per filter
 MOVIES_PER_QUERY = 50
 
 
@@ -34,7 +34,10 @@ class WikidataGraphAPI:
     Create basic ``Movie`` objects via SPARQL querys
     """
 
-    def get_movies(self, offset: int, limit: int):
+    def get_movies(self, offset: int, limit: int) -> list[dict]:
+        """
+        Send a request to Wikidata and return the entries
+        """
 
         print(f"Querying wikidata: offset={offset}, limit={limit}")
 
@@ -59,12 +62,13 @@ class WikidataGraphAPI:
 
     def run(self, count: int) -> None:
         """
-        Create ``count`` more Movie objects and update existing movies
+        Create ``count`` more Movie objects
         """
 
-        QUERY_LIMIT = 500
+        # Never request more than 500 entries at once
+        MAX_QUERY_LIMIT = 500
 
-        print(f"Start wikidata download. count={count}, limit per query={QUERY_LIMIT}")
+        print(f"Start wikidata download. count={count}")
 
         movie_data = []
 
@@ -73,7 +77,7 @@ class WikidataGraphAPI:
 
         offset = existing_count
         while offset < target_total:
-            limit = min(QUERY_LIMIT, target_total - offset)
+            limit = min(MAX_QUERY_LIMIT, target_total - offset)
             movie_data += self.get_movies(offset, limit)
             offset += limit
 
@@ -95,7 +99,8 @@ class WikidataGraphAPI:
 
 class WikidataAPI:
     """
-    Use the wikidata REST API to update movie objects that were created with ``WikidataSparqlAPI``
+    Use the wikidata REST API to update movie objects
+    that were created with ``WikidataSparqlAPI``
     """
 
     def __init__(self, movies):
@@ -135,7 +140,12 @@ class WikidataAPI:
         property_ids: str,
         limit: int = 10,
         label_only: bool = True,
-    ):
+    ) -> list[str | timedelta | date | dict]:
+        """
+        Read property values from `movie_data` and return them as a list.
+        Properties that refer to other Wikidata pages (e.g., Director)
+        are fetched with a separate API request.
+        """
 
         values = []
         claim_value_ids = []
@@ -167,7 +177,10 @@ class WikidataAPI:
                     values.append({"id": d["id"], "label": label})
         return values
 
-    def get_movie_data(self, movie_ids):
+    def get_movie_data(self, movie_ids: list[str]) -> dict:
+        """
+        Get information about movies
+        """
         movie_list = self.get_propertys_for_ids(movie_ids, extra_props=["claims"])
 
         result = {}
@@ -187,7 +200,7 @@ class WikidataAPI:
             }
         return result
 
-    def run(self):
+    def run(self) -> None:
         movie_count = self.movies.count()
 
         for i in range(0, movie_count, MOVIES_PER_QUERY):

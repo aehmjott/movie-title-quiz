@@ -59,7 +59,7 @@ class MovieTitleTranslator:
         translated_count = 0
 
         # Group titles by language before translating to increase the batch size
-        #
+        # Example: {"lang1": [[m1 ... m25], [m26 ... m50]], "lang2": ["m1 ... m10"]]}
         titles_by_language = {}
         for title_obj in self.movie_titles:
             if title_obj.language_code in titles_by_language:
@@ -89,6 +89,7 @@ class MovieTitleTranslator:
             )
             model = MarianMTModel.from_pretrained(model_name)
 
+            # Translate batches of movie titles
             for movie_title_objects in batches:
                 print(f"Batch size: {len(movie_title_objects)}")
 
