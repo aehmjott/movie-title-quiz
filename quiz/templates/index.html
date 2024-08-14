@@ -1,0 +1,33 @@
+<h2> Movie Title Quiz </h2>
+
+<table>
+{% for title in alternative_titles %}
+<tr>
+    <td><b>{{title.title}}</b></td>
+    <td>"{{title.translated_title}}"</td> 
+    <td>({{title.language_code}})</b></td>
+</tr>
+{% endfor %}
+</table>
+
+<div id="movie-hint" style="visibility: hidden; margin-top:5px">
+    {{movie.description}}
+</div>
+
+<div id="movie-answer" style="visibility: hidden; margin-top:5px">
+    <h3>{{movie.english_title}}<h3>
+</div>
+
+<button onclick="showElement('movie-hint');this.disabled='true'">Reveal Hint</button>
+<button onclick="showElement('movie-answer');this.disabled='true'">Reveal Answer</button>
+<div style="margin-top: 10px;">
+<button onclick="location.reload()" style="float: left">New Question</button>
+</div>
+
+<script>
+    function showElement(elementID) {
+        this.disabled = "disabled"
+        var e = document.getElementById(elementID)
+        e.style.visibility = "visible"
+    }
+</script>
