@@ -100,5 +100,10 @@ class PersonsAdminForm(forms.ModelForm):
 
 @admin.register(Movie)
 class MovieAdmin(admin.ModelAdmin):
+    list_display = (
+        "english_title",
+        "sitelinks",
+    )
     inlines = (AlternativeTitlesInline,)
     form = PersonsAdminForm
+    ordering = ("-sitelinks",)
